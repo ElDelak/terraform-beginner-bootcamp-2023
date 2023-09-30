@@ -22,7 +22,7 @@ variable "index_html_filepath"{
   type = string
 
   validation {
-    condition = fileexists("${path.root}${var.index_html_filepath}")
+    condition = fileexists(var.index_html_filepath)
     error_message = "The provider path for index.html does not exist."
   }
 
@@ -33,7 +33,7 @@ variable "error_html_filepath"{
   type = string
 
   validation {
-    condition = fileexists("${path.root}${var.error_html_filepath}")
+    condition = fileexists(var.error_html_filepath)
     error_message = "The provider path for error.html does not exist."
   }
 
