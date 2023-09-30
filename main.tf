@@ -1,5 +1,10 @@
 terraform {
-  
+  cloud {
+    organization = "mabrouk"
+    workspaces {
+      name = "terraform-cloud"
+    }
+  }
 }
 
 module  "terrahouse_aws"{
