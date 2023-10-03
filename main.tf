@@ -21,3 +21,14 @@ provider "terratowns" {
   error_html_filepath = var.error_html_filepath
   content_version = var.content_version
 } */
+
+resource "terratown_home" "home"{
+  name = "How to play arcanum in 2023"
+  description = <<DESCRIPTION
+  description of arcanum
+  DESCRIPTION
+  #domain_name= module.terrahouse_aws.cloudfront_url
+  domain_name= "rgrd3t54dg.cloudfront.net"
+  town= "gamers-gratto"
+  content_version= "1"
+}
