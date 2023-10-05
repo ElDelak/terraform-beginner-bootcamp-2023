@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http"
+	"bytes"
 	"context"
 	"log"
 	"fmt"
@@ -8,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-
 )
 
 func main(){
@@ -92,7 +94,7 @@ func Resource() *schema.Resource{
 				Required: true,	
 				Description: "Name of home",
 			},
-			"descrition": {
+			"description": {
 				Type: schema.TypeString,
 				Required: true,	
 				Description: "Description of home",
@@ -119,18 +121,98 @@ func Resource() *schema.Resource{
 	return resource
 }
 
+
+
 func resourceHouseCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Print("resourceHouseCreate:start")
 	var diags diag.Diagnostics
 	config := m.(*Config)
+	
+	payload := map[string] interface{}{
+		"name": d.Get("name").(string),
+		"description":d.Get("description").(string),
+		"domain_name":d.Get("domain_name").(string),
+		"town":d.Get("town").(string),
+		"content_version":d.Get("content_version").(int),
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// construct the http request
+	req, err := http.NewRequest("POST", config.Endpoint+"/u/"+config.UserUuid+"/homes", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	// Set header
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	defer resp.Body.Close()
+
+	var responseData map [string] interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+		return diag.FromErr(err)
+	}
+
+	// StatusOk = 200 HTTP Response Code
+	if resp.StatusCode != http.StatusOK {
+		return diag.FromErr(fmt.Errorf("failed to create home resource, status_code: %d, status: %s, body %s", resp.StatusCode, resp.Status, responseData))
+	}
+
+	// handle response status
+	
+	homeUUID := responseData["uuid"].(string)
+	d.SetId(homeUUID)
 	log.Print("resourceHouseCreate:end")
 	return diags
 }
+
 func resourceHouseRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Print("resourceHouseRead:start")
 	var diags diag.Diagnostics
 
 	config := m.(*Config)
+	homeUUID := d.Id()
+	// construct the http request
+	req, err := http.NewRequest("GET", config.Endpoint+"/u"+config.UserUuid+"/homes/"+homeUUID, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	// Set header
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	defer resp.Body.Close()
+
+	var responseData map[string] interface{}
+	// StatusOk = 200 HTTP Response Code
+	if resp.StatusCode == http.StatusOK{
+		if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil{
+			return diag.FromErr(err)
+		}
+		d.Set("name", responseData["name"].(string))
+		d.Set("description", responseData["description"].(string))
+		d.Set("domain_name", responseData["domain_name"].(string))
+		d.Set("content_version", responseData["content_version"].(int64))
+	} else if resp.StatusCode != http.StatusOK {
+		d.SetId("")
+	} else if resp.StatusCode != http.StatusOK {
+		return diag.FromErr(fmt.Errorf("Faild to read home resource, status_code: %d, status: %s, body %s", resp.StatusCode, resp.Status, responseData))
+	}
 
 	log.Print("resourceHouseRead:end")
 	return diags
@@ -140,12 +222,44 @@ func resourceHouseUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 
 	config := m.(*Config)
-	// construct the http request
-	req, err := http.NewRequest("POST", config.Endpoint+"/u"+config.UserUuid+"/homes", bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return diag.FromError(error)
+	homeUUID := d.Id()
+	
+	payload := map[string]interface{}{
+		"name": d.Get("name").(string),
+		"description":d.Get("description").(string),
+		"content_version":d.Get("content_version").(int),
 	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// construct the http request
+	req, err := http.NewRequest("PUT", config.Endpoint+"/u"+config.UserUuid+"/homes/"+homeUUID, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	// Set header
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	defer resp.Body.Close()
+
+	// StatusOk = 200 HTTP Response Code
+	if resp.StatusCode != http.StatusOK {
+		return diag.FromErr(fmt.Errorf("Faild to update home resource, status_code: %d, status: %s", resp.StatusCode, resp.Status))
+	}
+
 	log.Print("resourceHouseUpdate:end")
+	d.Set("name", payload["name"])
+	d.Set("description", payload["description"])
+	d.Set("content_version", payload["content_version"])
 	return diags
 }
 func resourceHouseDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -153,7 +267,31 @@ func resourceHouseDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 
 	config := m.(*Config)
+	homeUUID := d.Id()
+	// construct the http request
+	req, err := http.NewRequest("DELETE", config.Endpoint+"/u"+config.UserUuid+"/homes/"+homeUUID, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
+	// Set header
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	defer resp.Body.Close()
+
+	// StatusOk = 200 HTTP Response Code
+	if resp.StatusCode != http.StatusOK {
+		return diag.FromErr(fmt.Errorf("Faild to delete home resource, status_code: %d, status: %s", resp.StatusCode, resp.Status))
+	}
+
+	d.SetId("")
 	log.Print("resourceHouseDelete:end")
 	return diags
 }
