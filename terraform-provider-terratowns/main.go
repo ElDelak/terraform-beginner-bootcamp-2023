@@ -116,11 +116,11 @@ func Resource() *schema.Resource{
 
 			},
 		},
+
 	}
 	log.Print("Resource:end")
 	return resource
 }
-
 
 
 func resourceHouseCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
