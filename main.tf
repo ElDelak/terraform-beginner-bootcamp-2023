@@ -29,6 +29,6 @@ resource "terratowns_home" "home" {
   DESCRIPTION
   #domain_name= module.terrahouse_aws.cloudfront_url
   domain_name= "rgrd3t54dg.cloudfront.net"
-  town= "gamers-gratto"
+  town= "gamers-grotto"
   content_version= "1"
 }
