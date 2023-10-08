@@ -182,7 +182,7 @@ func resourceHouseRead(ctx context.Context, d *schema.ResourceData, m interface{
 	config := m.(*Config)
 	homeUUID := d.Id()
 	// construct the http request
-	req, err := http.NewRequest("GET", config.Endpoint+"/u"+config.UserUuid+"/homes/"+homeUUID, nil)
+	req, err := http.NewRequest("GET", config.Endpoint+"/u/"+config.UserUuid+"/homes/"+homeUUID, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -208,9 +208,12 @@ func resourceHouseRead(ctx context.Context, d *schema.ResourceData, m interface{
 		d.Set("description", responseData["description"].(string))
 		d.Set("domain_name", responseData["domain_name"].(string))
 		d.Set("content_version", responseData["content_version"].(float64))
-	} else if resp.StatusCode != http.StatusOK {
+		log.Print("Read:StatusOK")
+	} else if resp.StatusCode == http.StatusNotFound {
 		d.SetId("")
+		log.Print("Read:StatusNotFound")
 	} else if resp.StatusCode != http.StatusOK {
+		log.Print("Read:StatusKO")
 		return diag.FromErr(fmt.Errorf("Faild to read home resource, status_code: %d, status: %s, body %s", resp.StatusCode, resp.Status, responseData))
 	}
 
@@ -235,7 +238,7 @@ func resourceHouseUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	// construct the http request
-	req, err := http.NewRequest("PUT", config.Endpoint+"/u"+config.UserUuid+"/homes/"+homeUUID, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest("PUT", config.Endpoint+"/u/"+config.UserUuid+"/homes/"+homeUUID, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -269,7 +272,7 @@ func resourceHouseDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	config := m.(*Config)
 	homeUUID := d.Id()
 	// construct the http request
-	req, err := http.NewRequest("DELETE", config.Endpoint+"/u"+config.UserUuid+"/homes/"+homeUUID, nil)
+	req, err := http.NewRequest("DELETE", config.Endpoint+"/u/"+config.UserUuid+"/homes/"+homeUUID, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
