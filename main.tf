@@ -33,14 +33,14 @@ resource "terratowns_home" "home_game" {
   DESCRIPTION
   domain_name= module.home_game.domain_name
   town= "missingo"
-  content_version= "1"
+  content_version= var.game.content_version
 }
 
-/* module "home_payday" {
+module "home_payday" {
   source = "./modules/terrahouse_aws"
   user_uuid = var.teacherseat_user_uuid
-  public_path = var.payday.content_version
-  content_version = var.payday.public_path
+  public_path = var.payday.public_path
+  content_version = var.payday.content_version
 }
 
 resource "terratowns_home" "home_payday" {
@@ -50,6 +50,5 @@ resource "terratowns_home" "home_payday" {
   DESCRIPTION
   domain_name= module.home_payday.domain_name
   town= "missingo"
-  content_version= "1"
+  content_version= var.payday.content_version
 }
- */
