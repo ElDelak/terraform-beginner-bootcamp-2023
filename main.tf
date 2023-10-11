@@ -5,6 +5,12 @@ terraform {
       version = "1.0.0"
     }
   }
+  cloud {
+    organization = "mabrouk"
+    workspaces {
+      name = "terra-house-1"
+    }
+  }
 }
 
 provider "terratowns" {
@@ -13,21 +19,36 @@ provider "terratowns" {
   token=var.terratowns_access_token
 }
 
-module "terrahouse_aws" {
+module "home_game" {
   source = "./modules/terrahouse_aws"
   user_uuid = var.teacherseat_user_uuid
-  index_html_filepath = var.index_html_filepath
-  error_html_filepath = var.error_html_filepath
-  content_version = var.content_version
-  assets_path = var.assets_path
+  content_version = var.game.content_version
+  public_path = var.game.public_path
 }
 
-resource "terratowns_home" "home" {
+resource "terratowns_home" "home_game" {
   name = "How to play arcanum in 2023"
   description = <<DESCRIPTION
   description of arcanum
   DESCRIPTION
-  domain_name= module.terrahouse_aws.cloudfront_url
+  domain_name= module.home_game.domain_name
   town= "missingo"
-  content_version= "1"
+  content_version= var.game.content_version
+}
+
+module "home_payday" {
+  source = "./modules/terrahouse_aws"
+  user_uuid = var.teacherseat_user_uuid
+  public_path = var.payday.public_path
+  content_version = var.payday.content_version
+}
+
+resource "terratowns_home" "home_payday" {
+  name = "making you Payday bar"
+  description = <<DESCRIPTION
+  description payday bar
+  DESCRIPTION
+  domain_name= module.home_payday.domain_name
+  town= "missingo"
+  content_version= var.payday.content_version
 }
