@@ -34,3 +34,7 @@ override.tf.json
 terraform.rc
 
 terraform-provider-terratowns/terraform-provider-terratowns_v*
+
+package-lock.json
+package.json
+**/node_modules/*

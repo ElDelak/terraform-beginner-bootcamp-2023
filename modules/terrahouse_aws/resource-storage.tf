@@ -21,13 +21,35 @@ resource "aws_s3_bucket_website_configuration" "website_configuration" {
   }
 }
 
-resource "aws_s3_object" "upload_assets"{
+/* resource "aws_s3_object" "upload_assets"{
   for_each = fileset("$(var.public_path)/assets", "*.{jpg,png,gif,jpeg}")
   bucket = aws_s3_bucket.website_bucket.bucket
   key    = "assets/${each.key}"
   source = "${var.public_path}/assets/${each.key}"
-  #content_type = "text/html"
   etag = filemd5("${var.public_path}/assets/${each.key}")
+  lifecycle {
+    replace_triggered_by = [ terraform_data.content_version.output ]
+    ignore_changes = [ etag ]
+  }
+}
+ */
+
+
+ locals {
+  mime_types = {
+    "css"  = "text/css"
+    "js"   = "application/javascript"
+    "jpg" = "image/jpg"
+    "ico"  = "image/vnd.microsoft.icon"
+  }
+}
+resource "aws_s3_object" "upload_assets"{
+  for_each = fileset("${var.public_path}/assets/", "**")
+  bucket = aws_s3_bucket.website_bucket.bucket
+  key    = "assets/${each.value}"
+  source = "${var.public_path}/assets/${each.value}"
+  content_type = lookup(tomap(local.mime_types), element(split(".", each.value), length(split(".", each.value)) - 1))
+  etag = filemd5("${var.public_path}/assets/${each.value}")
   lifecycle {
     replace_triggered_by = [ terraform_data.content_version.output ]
     ignore_changes = [ etag ]
