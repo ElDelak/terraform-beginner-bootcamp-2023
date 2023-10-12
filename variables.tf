@@ -19,3 +19,9 @@ variable "payday" {
     content_version = number
   })
 }
+variable "lablabi" {
+  type = object({
+    public_path = string
+    content_version = number
+  })
+}

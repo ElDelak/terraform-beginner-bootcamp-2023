@@ -7,3 +7,7 @@ payday = {
     public_path = "public/payday"
     content_version = 1
 }
+lablabi = {
+    public_path = "public/lablabi"
+    content_version = 1
+}

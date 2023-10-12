@@ -18,7 +18,7 @@ provider "terratowns" {
   user_uuid=var.teacherseat_user_uuid
   token=var.terratowns_access_token
 }
-
+/* 
 module "home_game" {
   source = "./modules/terrahouse_aws"
   user_uuid = var.teacherseat_user_uuid
@@ -51,4 +51,21 @@ resource "terratowns_home" "home_payday" {
   domain_name= module.home_payday.domain_name
   town= "missingo"
   content_version= var.payday.content_version
+}
+ */
+module "home_lablabi" {
+  source = "./modules/terrahouse_aws"
+  user_uuid = var.teacherseat_user_uuid
+  public_path = var.lablabi.public_path
+  content_version = var.lablabi.content_version
+}
+
+resource "terratowns_home" "home_lablabi" {
+  name = "Lablabi recipe"
+  description = <<DESCRIPTION
+  Lablabi is a popular Tunisian dish. It’s a chickpeas soup served as a breakfast street food during cold days.
+  DESCRIPTION
+  domain_name= module.home_lablabi.domain_name
+  town= "cooker-cove"
+  content_version= var.lablabi.content_version
 }
